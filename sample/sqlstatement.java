@@ -6,12 +6,12 @@ import java.sql.*;
 
 public class sqlstatement {
     static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-    static final String DB_URL = "jdbc:mysql://localhost:3306/uberteach?autoReconnect=true&useSSL=false";
+    static final String DB_URL = "jdbc:mysql://localhost:3306/acalink?autoReconnect=true&useSSL=false";
     private Connection conn = null;
     private Statement stmt = null;
     //  Database credentials
     static final String USER = "root";
-    static final String PASS = "facebook150";
+    static final String PASS = "<3natsume";
     // JDBC driver name and database URL
     public sqlstatement(){
         Connection conn = null;
@@ -88,7 +88,7 @@ public class sqlstatement {
                 se.printStackTrace();
             }//end finally try
         }//end try
-        System.out.println("Goodbye!");
+        System.out.println("Process Ended!");
 
         return crs;
     }//end main

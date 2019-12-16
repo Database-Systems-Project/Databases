@@ -84,5 +84,10 @@ public class Teacher extends User{
         }
         return false;
     }
+    public CachedRowSet getTeachers(){
+        sqlstatement sql=new sqlstatement();
+        String query="select firstName,lastName,Qualification from user join teacher on user.user_id=teacher.teacher_id;";
+        return sql.getData(query);
+    }
 
 }

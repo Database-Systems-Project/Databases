@@ -16,11 +16,13 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import javax.sql.rowset.CachedRowSet;
 import java.sql.SQLException;
 
-public class Pages extends Stage{
-
+public class Pages extends Stage {
+    Appointment a;
     public void mainPage(Stage primaryStage){
+        a=new Appointment();
         GridPane grid=new GridPane();//Grid is the child of Stage for Alignment
         grid.setAlignment(Pos.CENTER);//Centering every component
         grid.setHgap(10);
@@ -69,9 +71,12 @@ public class Pages extends Stage{
         signinS.setOnAction(e->
         {
             Student s = new Student();
+
             try {
-                if(s.check(userName.getText(),pass.getText()))
+                if(s.check(userName.getText(),pass.getText())) {
                     loginStudent(primaryStage);
+                    a.setStudentID(userName.getText());
+                }
                 else
                 {
                     grid.add(error,0,4);
@@ -87,14 +92,18 @@ public class Pages extends Stage{
         {
             Teacher t = new Teacher();
             try {
-                if(t.check(userName.getText(),pass.getText()))
+                String user=userName.getText();
+                if(t.check(user,pass.getText())){
+                    System.out.println(user);
+                    a.setTeacher_idEmail(user);
                     loginTeacher(primaryStage);
+                }
                 else
                 {
                     grid.add(error,0,4);
                 }
             } catch (SQLException ex) {
-                ex.printStackTrace();
+                System.out.println("Try again!");
             }
         });
         //grid.add(error,0,4);
@@ -291,23 +300,54 @@ public class Pages extends Stage{
 
         Button courses=new Button("View Courses");
         courses.setMaxSize(200,200);
+        courses.setOnAction(e->{
 
+            try {
+                viewCourses(primaryStage);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
+        Button view=new Button("View Appointments");
+        view.setMaxSize(200,200);
+        view.setOnAction(e->{
+            try {
+                studentAppointment(primaryStage);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
         Button wallet=new Button("Open Wallet");
         wallet.setMaxSize(200,200);
+        wallet.setOnAction(e->{
+            try {
+                getStudentWallet(primaryStage);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
 
         Button select=new Button("Select Course");
         select.setMaxSize(200,200);
+        select.setOnAction(e->{
+            try {
+                selectCourses(primaryStage);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
 
+        });
         Button signout=new Button("Sign Out");
         signout.setMaxSize(200,200);
         signout.setOnAction(e->mainPage(primaryStage));
 
         grid.add(courses,0,1);
         grid.add(wallet,0,2);
-        grid.add(select,0,3);
-        grid.add(signout,0,4);
+        grid.add(view,0,3);
+        grid.add(select,0,4);
+        grid.add(signout,0,5);
 
-        Scene login=new Scene(grid,300,300);
+        Scene login=new Scene(grid,300,400);
         login.getStylesheets().add(Main.class.getResource("style.css").toExternalForm());
         primaryStage.setScene(login);
     }
@@ -320,13 +360,24 @@ public class Pages extends Stage{
 
         Button appoi=new Button("New Appointment");
         appoi.setMaxSize(300,200);
-        appoi.setOnAction(e->makeAppoi(primaryStage));
+        appoi.setOnAction(e->{
+            try {
+                viewAppointment(primaryStage);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+
+        });
 
         Button currAppoi=new Button("Appointments");
         currAppoi.setMaxSize(300,200);
-
-        Button view=new Button("View Students");
-        view.setMaxSize(300,200);
+        currAppoi.setOnAction(e->{
+            try {
+                teacherAppointments(primaryStage);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
 
         Button currBalance=new Button("Current Balance");
         currBalance.setMaxSize(300,200);
@@ -336,9 +387,8 @@ public class Pages extends Stage{
         signout.setOnAction(e->mainPage(primaryStage));
         grid.add(appoi,0,1);
         grid.add(currAppoi,0,2);
-        grid.add(view,0,3);
-        grid.add(currBalance,0,4);
-        grid.add(signout,0,5);
+        grid.add(currBalance,0,3);
+        grid.add(signout,0,4);
 
         Scene login=new Scene(grid,350,400);
         login.getStylesheets().add(Main.class.getResource("style.css").toExternalForm());
@@ -367,6 +417,11 @@ public class Pages extends Stage{
 
         Button create=new Button("Create");
         create.setMaxSize(200,300);
+        create.setOnAction(e->{
+            a.createAppointment(date.getValue(),time.getText(),location.getText(),duration.getText());
+            loginTeacher(primaryStage);
+        });
+
 
         dateTime.getChildren().addAll(date,time);
         grid.add(dateTime,0,0);
@@ -377,5 +432,247 @@ public class Pages extends Stage{
         Scene appoi=new Scene(grid,250,300);
         appoi.getStylesheets().add(Main.class.getResource("style.css").toExternalForm());
         primaryStage.setScene(appoi);
+    }
+    public void viewCourses(Stage primaryStage) throws SQLException {
+        CachedRowSet rs=a.getCourses();
+        GridPane grid=new GridPane();
+        grid.setHgap(0);
+        grid.setVgap(0);
+        grid.setAlignment(Pos.CENTER);
+
+        int gridNo=0;
+        int buttonNo=0;
+
+        Button b[]=new Button[rs.size()*2];
+        while(rs.next()) {
+            HBox h = new HBox();
+            System.out.println(buttonNo);
+            b[buttonNo] = new Button(rs.getString("firstName") + " " + rs.getString("lastName") + ": " + rs.getString("Qualification"));
+            b[buttonNo].setMinSize(400, 100);
+            b[buttonNo].setMaxSize(400, 100);
+
+            h.getChildren().addAll(b[buttonNo]);
+            System.out.println("Reacher2");
+            grid.add(h, 0, gridNo);
+            buttonNo++;
+            gridNo++;
+        }
+        Button back=new Button("Back");
+        back.setOnAction(e->loginStudent(primaryStage));
+        back.setMinSize(400,100);
+        back.setLayoutX(300);
+        grid.add(back,0,gridNo);
+        gridNo++;
+        Scene view=new Scene(grid,400,gridNo*99);
+        view.getStylesheets().add(Main.class.getResource("style1.css").toExternalForm());
+        primaryStage.setScene(view);
+    }
+    public void selectCourses(Stage primaryStage) throws SQLException {
+        Teacher t=new Teacher();
+        CachedRowSet rs=t.getTeachers();
+        GridPane grid=new GridPane();
+        grid.setHgap(0);
+        grid.setVgap(0);
+        grid.setAlignment(Pos.CENTER);
+
+        int gridNo=0;
+        int buttonNo=0;
+        ScrollPane pane=new ScrollPane();
+        Button b[]=new Button[rs.size()*2];
+        while(rs.next()) {
+            String firstName=rs.getString("firstName");
+            String lastName=rs.getString("lastName");
+            String qual=rs.getString("Qualification");
+            VBox h = new VBox();
+            System.out.println(buttonNo);
+            b[buttonNo] = new Button(firstName + " " + lastName + ": " + qual);
+            b[buttonNo].setMinSize(400, 100);
+            b[buttonNo].setMaxSize(400, 100);
+            b[buttonNo].setOnAction(e->{
+                try {
+                    a.setTeacherID(firstName,lastName);
+                    a.selectCourse();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            });
+            h.getChildren().addAll(b[buttonNo]);
+            grid.add(h, 0, gridNo);
+            buttonNo++;
+            gridNo++;
+        }
+        Button back=new Button("Back");
+        back.setOnAction(e->loginStudent(primaryStage));
+        back.setMinSize(400,100);
+        back.setLayoutX(300);
+        grid.add(back,0,gridNo);
+        gridNo++;
+        pane.setContent(grid);
+        Scene view=new Scene(pane,410,500);
+        view.getStylesheets().add(Main.class.getResource("style1.css").toExternalForm());
+        primaryStage.setScene(view);
+    }
+    public void viewAppointment(Stage primaryStage) throws SQLException {
+        CachedRowSet rs=a.viewNewAppointments();
+        GridPane grid=new GridPane();
+        grid.setHgap(0);
+        grid.setVgap(0);
+        grid.setAlignment(Pos.CENTER);
+
+        int gridNo=0;
+        int buttonNo=0;
+
+        Button b[]=new Button[rs.size()*2];
+
+        while(rs.next()) {
+            String firstName,lastName,age,gender,student_id,teacher_id;
+            firstName=rs.getString("firstName");
+            lastName=rs.getString("lastName");
+            age=rs.getString( "age");
+            gender=rs.getString("gender");
+            student_id=rs.getString("student_id");
+            teacher_id=rs.getString("teacher_id");
+            VBox h = new VBox();
+            b[buttonNo] = new Button(firstName+" "+lastName+" "+age+" "+gender);
+            b[buttonNo].setMinSize(400, 100);
+            b[buttonNo].setMaxSize(400, 100);
+            b[buttonNo].setOnAction(e->{
+                a.setAppointment_id(student_id,teacher_id);
+                makeAppoi(primaryStage);
+            });
+            h.getChildren().addAll(b[buttonNo]);
+            grid.add(h, 0, gridNo);
+            buttonNo++;
+            gridNo++;
+        }
+        Button back=new Button("Back");
+        back.setOnAction(e->loginTeacher(primaryStage));
+        back.setMinSize(400,100);
+        grid.add(back,0,gridNo);
+        gridNo++;
+        Scene view=new Scene(grid,400,gridNo*99);
+        view.getStylesheets().add(Main.class.getResource("style1.css").toExternalForm());
+        primaryStage.setScene(view);
+    }
+    public void teacherAppointments(Stage primaryStage) throws SQLException {
+        CachedRowSet rs=a.getAppointments();
+        GridPane grid=new GridPane();
+        grid.setHgap(0);
+        grid.setVgap(0);
+        grid.setAlignment(Pos.CENTER);
+
+        int gridNo=0;
+        int buttonNo=0;
+
+        ScrollPane pane=new ScrollPane();
+        Button b[]=new Button[rs.size()*2];
+
+        while(rs.next()){
+        String firstName=rs.getString("firstName");
+        String lastName=rs.getString("lastName");
+        String date=rs.getString("dateAppointment");
+        String time=rs.getString("time");
+        String location=rs.getString("location");
+        String duration=rs.getString("duration");
+        VBox h = new VBox();
+        System.out.println(buttonNo);
+        b[buttonNo] = new Button(firstName + " " + lastName +" "+ date+ " "+time+" "+location+" "+duration);
+        b[buttonNo].setMinSize(400, 100);
+        b[buttonNo].setMaxSize(400, 100);
+
+        h.getChildren().addAll(b[buttonNo]);
+        grid.add(h, 0, gridNo);
+        buttonNo++;
+        gridNo++;
+    }
+    Button back=new Button("Back");
+        back.setOnAction(e->loginTeacher(primaryStage));
+        back.setMinSize(400,100);
+        back.setLayoutX(300);
+        grid.add(back,0,gridNo);
+    gridNo++;
+        pane.setContent(grid);
+    Scene view=new Scene(pane,410,500);
+        view.getStylesheets().add(Main.class.getResource("style1.css").toExternalForm());
+        primaryStage.setScene(view);
+    }
+    public void studentAppointment(Stage primaryStage) throws SQLException {
+        CachedRowSet rs=a.getSAppointment();
+        GridPane grid=new GridPane();
+        grid.setHgap(0);
+        grid.setVgap(0);
+        grid.setAlignment(Pos.CENTER);
+
+        int gridNo=0;
+        int buttonNo=0;
+
+        ScrollPane pane=new ScrollPane();
+        Button b[]=new Button[rs.size()*2];
+
+        while(rs.next()){
+            String firstName=rs.getString("firstName");
+            String lastName=rs.getString("lastName");
+            String date=rs.getString("dateAppointment");
+            String time=rs.getString("time");
+            String location=rs.getString("location");
+            String duration=rs.getString("duration");
+            VBox h = new VBox();
+            System.out.println(buttonNo);
+            b[buttonNo] = new Button(firstName + " " + lastName +" "+ date+ " "+time+" "+location+" "+duration);
+            b[buttonNo].setMinSize(400, 100);
+            b[buttonNo].setMaxSize(400, 100);
+
+            h.getChildren().addAll(b[buttonNo]);
+            grid.add(h, 0, gridNo);
+            buttonNo++;
+            gridNo++;
+        }
+        Button back=new Button("Back");
+        back.setOnAction(e->loginStudent(primaryStage));
+        back.setMinSize(400,100);
+        back.setLayoutX(300);
+        grid.add(back,0,gridNo);
+        gridNo++;
+        pane.setContent(grid);
+        Scene view=new Scene(pane,410,500);
+        view.getStylesheets().add(Main.class.getResource("style1.css").toExternalForm());
+        primaryStage.setScene(view);
+    }
+    public void getStudentWallet(Stage primaryStage) throws SQLException {
+        CachedRowSet rs=a.getStudentWallet();
+        GridPane grid=new GridPane();
+        grid.setHgap(0);
+        grid.setVgap(0);
+        grid.setAlignment(Pos.CENTER);
+
+        int gridNo=0;
+        int buttonNo=0;
+
+
+        Button b[]=new Button[rs.size()*2];
+
+        while(rs.next()){
+            String wallet=rs.getString("wallet");
+            VBox h = new VBox();
+            System.out.println(buttonNo);
+            b[buttonNo] = new Button("Your current balance is: "+wallet+"$");
+            b[buttonNo].setMinSize(400, 100);
+            b[buttonNo].setMaxSize(400, 100);
+
+            h.getChildren().addAll(b[buttonNo]);
+            grid.add(h, 0, gridNo);
+            buttonNo++;
+            gridNo++;
+        }
+        Button back=new Button("Back");
+        back.setOnAction(e->loginStudent(primaryStage));
+        back.setMinSize(400,100);
+        back.setLayoutX(300);
+        grid.add(back,0,gridNo);
+        gridNo++;
+
+        Scene view=new Scene(grid,410,gridNo*100);
+        view.getStylesheets().add(Main.class.getResource("style1.css").toExternalForm());
+        primaryStage.setScene(view);
     }
 }
